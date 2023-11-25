@@ -1,8 +1,12 @@
 import torch 
 import torchvision
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset,random_split,DataLoader
+from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision.transforms import transforms as v2
 import torchvision.transforms.functional as F
+
+from collections import defaultdict
+import random
 
 import matplotlib.pyplot as plt
 
@@ -11,16 +15,28 @@ import scipy.io
 import numpy as np
 import os
 
+from sklearn.metrics import accuracy_score
+
 IMG_MEAN = [0.485, 0.456, 0.406]
 IMG_STD = [0.229, 0.224, 0.225]
 
-
+np.random.seed(0)
+torch.manual_seed(0)
 
 def load_image(path:str):
     image = Image.open(path)
     if image.mode !='RGB' or image.mode != 'RGBA': # converts grayscale image to RGB
         image = image.convert("RGB")
     return image
+
+def get_augumentations():
+    return v2.Compose([
+        v2.Resize([256,192]),
+        v2.Pad(10),
+        # v2.RandomResizedCrop([256,192]),
+        ]) 
+def get_normalize_t():
+    return v2.Compose([v2.ToTensor(),v2.Normalize(IMG_MEAN, IMG_STD)])
 
 class PedestrianAttributeDataset(Dataset):
     def __init__(self,annotation_path:str,image_folder:str,split = "Train"):
@@ -33,14 +49,10 @@ class PedestrianAttributeDataset(Dataset):
         self.classes = self.annotations["attributes"]
         self.class2label = {x[0][0]:i for i,x in enumerate(self.classes)}
         self.label2class = {i:x[0][0] for i,x in enumerate(self.classes)}
-        self.augmentations = v2.Compose([
-        v2.Resize([256,192]),
-        v2.Pad(10),
-        # v2.RandomResizedCrop([256,192]),
-        ]) 
+        self.augmentations = get_augumentations()
         self.train_transforms = v2.Compose([ v2.RandomRotation(5),
         v2.RandomHorizontalFlip(0.5)])
-        self.normalize = v2.Compose([v2.ToTensor(),v2.Normalize(IMG_MEAN, IMG_STD)])
+        self.normalize = get_normalize_t()
     
     def get_files_labels(self):
         match self.split:
@@ -49,15 +61,13 @@ class PedestrianAttributeDataset(Dataset):
             case "Val":
                 return self.annotations["val_images_name"],self.annotations["val_label"]
             case "Test":
-                return self.annotations["test_images_name"],None
+                return self.annotations["test_images_name"],self.annotations["test_label"]
             
             
     def __getitem__(self,index):
         img = load_image(os.path.join(self.image_folder,self.files[index,0][0]))
         
         img = self.augmentations(img)
-        if self.split=="Test":
-            return self.normalize(img)
         if self.split == "Train":
             img = self.train_transforms(img)
         return self.normalize(img), self.labels[index]
@@ -71,6 +81,48 @@ class PedestrianAttributeDataset(Dataset):
     
     def l2c(self,x:int):
         return self.label2class[x]
+
+    
+class PedestrianReIDDataset(Dataset):
+    def __init__(self, root_dir):
+        self.root_dir = root_dir
+        self.image_folder = os.path.join(root_dir,"bounding_box_train")
+        self.files_list = os.listdir(self.image_folder)
+        self.files = self.get_file_dict()
+        self.labels = list(self.files.keys())
+        self.train_transforms = v2.Compose([ v2.RandomRotation(5),
+        v2.RandomHorizontalFlip(0.5)])
+        self.augmentations = get_augumentations()
+        self.normalize = get_normalize_t()
+        
+    def get_file_dict(self):
+        c = defaultdict(list)
+        for file in self.files_list:
+            x = file.split("_")[0]
+            c[x].append(file)
+        return c
+            
+    def __getitem__(self, index):
+        anchor_name,negative_name = random.choices(self.labels, k=2)
+        anchor_name,positive_name = random.choices(self.files[anchor_name],k=2)
+        anchor = load_image(os.path.join(self.image_folder,anchor_name))
+        positive = load_image(os.path.join(self.image_folder,positive_name))
+
+        # Select a negative sample (image with a different label)
+        negative_name = random.choice(self.files[negative_name])
+        
+        negative  = load_image(os.path.join(self.image_folder,negative_name))
+        
+        anchor, positive,negative = self.augmentations(anchor),self.augmentations(positive),self.augmentations(negative)
+        if self.train_transforms:
+            anchor = self.train_transforms(anchor)
+            positive = self.train_transforms(positive)
+            negative = self.train_transforms(negative)
+
+        return self.normalize(anchor), self.normalize(positive), self.normalize(negative)
+
+    def __len__(self):
+        return len(self.labels)
 
 
 def denormalize(x, mean=IMG_MEAN, std=IMG_STD):
@@ -97,17 +149,56 @@ def show_grid(imgs):
 def get_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def get_dataloader(annotation_path="../gcs/pa-100k/annotation/annotation.mat",image_folder="../gcs/pa-100k/release_data/",split = "Train",batch_size=4):
+def get_attr_dataloader(annotation_path="../gcs/pa-100k/annotation/annotation.mat",image_folder="../gcs/pa-100k/release_data/",split = "Train",batch_size=4):
     match split:
         case "Train":
             train_dataset = PedestrianAttributeDataset(annotation_path,image_folder,split)
-            return torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            l = len(train_dataset)//2
+            train_dataset,_ = random_split(train_dataset,(l,l))
+            return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         case "Val":
             val_dataset = PedestrianAttributeDataset(annotation_path,image_folder,split)
-            return torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+            l = len(val_dataset)//2
+            val_dataset,_ = random_split(val_dataset,(l,l))
+            return DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+        
+        case "Test":
+            test_dataset = PedestrianAttributeDataset(annotation_path,image_folder,split)
+            return DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+            
+def get_reid_dataloader(root_dir,split="TrainVal",batch_size=4,validation_split = .1):
+    train_dataset = PedestrianReIDDataset(root_dir)
+    match split:
+        case "Train":
+            return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        case "TrainVal":
+            random_seed= 42
+            dataset_size = len(train_dataset)
+            indices = list(range(dataset_size))
+            split = int(np.floor(validation_split * dataset_size))
+            
+            np.random.seed(random_seed)
+            np.random.shuffle(indices)
+            train_indices, val_indices = indices[split:], indices[:split]
+
+            # Creating PT data samplers and loaders:
+            train_sampler = SubsetRandomSampler(train_indices)
+            valid_sampler = SubsetRandomSampler(val_indices)
+            train_dataloader = DataLoader(train_dataset, batch_size=batch_size, drop_last=True,sampler = train_sampler)
+            val_loader = DataLoader(train_dataset, batch_size=1,drop_last=True,sampler = valid_sampler)
+            return train_dataloader,val_loader
         
         case "Test":
             test_dataset = PedestrianAttributeDataset(annotation_path,image_folder,split)
             return torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    
+
             
-        
+
+def get_accuracy(y_true,y_pred):
+    y_pred = torch.sigmoid(y_pred)
+    y_pred[y_pred >=0.5] =1
+    y_pred[y_pred<0.5] =0
+    
+    return accuracy_score(y_true,y_pred)
+    
