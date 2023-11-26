@@ -8,11 +8,12 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 import scipy.io
-from utils import PedestrianAttributeDataset,show_grid,get_device,get_dataloader,get_accuracy
+from utils import PedestrianAttributeDataset,show_grid,get_device,get_attr_dataloader,get_accuracy,get_infinite_loader,get_infinite_zip_loader
 from model import VisionGuard
 import os 
 
 
+#Write train for boith reid and attr and seprate all trains and vals for both
 def train(model,dataloader,criterion,optimizer,scheduler=None,num_epochs=100,device="cpu",out_path="outputs",tf_logs="tf_logs"):
     
     writer = SummaryWriter(tf_logs)
@@ -111,8 +112,8 @@ def train(model,dataloader,criterion,optimizer,scheduler=None,num_epochs=100,dev
     
 
 if __name__=="__main__":
-    train_dataloader = get_dataloader(annotation_path="../../projectcv/pa-100k/annotation/annotation.mat",image_folder="../../projectcv/pa-100k/release_data/",split = "Train",batch_size =32)
-    val_dataloader = get_dataloader(annotation_path="../../projectcv/pa-100k/annotation/annotation.mat",image_folder="../../projectcv/pa-100k/release_data/",split = "Val",batch_size =1)
+    train_dataloader = get_attr_dataloader(annotation_path="../../projectcv/pa-100k/annotation/annotation.mat",image_folder="../../projectcv/pa-100k/release_data/",split = "Train",batch_size =32)
+    val_dataloader = get_attr_dataloader(annotation_path="../../projectcv/pa-100k/annotation/annotation.mat",image_folder="../../projectcv/pa-100k/release_data/",split = "Val",batch_size =1)
     dataloader ={"train":train_dataloader,
                 "val":val_dataloader}
     model = VisionGuard()

@@ -14,6 +14,8 @@ from PIL import Image
 import scipy.io
 import numpy as np
 import os
+import itertools
+
 
 from sklearn.metrics import accuracy_score
 
@@ -201,4 +203,26 @@ def get_accuracy(y_true,y_pred):
     y_pred[y_pred<0.5] =0
     
     return accuracy_score(y_true,y_pred)
-    
+
+
+
+def get_infinite_loader(loader1):
+    iterator1 = iter(loader1)
+
+    while True:
+        try:
+            batch1 = next(iterator1)
+            yield batch1
+        except StopIteration:
+            # Reset iterator1 when it reaches the end
+            iterator1 = iter(loader1)
+
+def get_infinite_zip_loader(loader1, loader2):
+    iterator1 = iter(loader1)
+    iterator2 = iter(loader2)
+
+    while True:
+        batch1 = next(iterator1)
+        batch2 = next(iterator2)
+        yield batch1, batch2
+
