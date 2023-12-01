@@ -41,6 +41,7 @@ def get_normalize_t():
     return v2.Compose([v2.ToTensor(),v2.Normalize(IMG_MEAN, IMG_STD)])
 
 class PedestrianAttributeDataset(Dataset):
+    
     def __init__(self,annotation_path:str,image_folder:str,split = "Train"):
         self.annotations =scipy.io.loadmat(annotation_path)
         self.image_folder = image_folder
@@ -58,12 +59,15 @@ class PedestrianAttributeDataset(Dataset):
     
     def get_files_labels(self):
         match self.split:
+            
             case "Train":
                 return self.annotations["train_images_name"],self.annotations["train_label"]
             case "Val":
                 return self.annotations["val_images_name"],self.annotations["val_label"]
             case "Test":
                 return self.annotations["test_images_name"],self.annotations["test_label"]
+            case _ :
+                raise NotFoundError(f"{self.split} not found.")
             
             
     def __getitem__(self,index):
@@ -84,6 +88,13 @@ class PedestrianAttributeDataset(Dataset):
     def l2c(self,x:int):
         return self.label2class[x]
 
+
+def get_classes_from_lables(annotation:str,i):
+    annotations =scipy.io.loadmat(annotation)
+    classes = annotations["attributes"]
+    class2label = {x[0][0]:i for i,x in enumerate(classes)}
+    return class2label[i]
+    
     
 class PedestrianReIDDataset(Dataset):
     def __init__(self, root_dir):
@@ -166,7 +177,7 @@ def get_attr_dataloader(annotation_path="../gcs/pa-100k/annotation/annotation.ma
         
         case "Test":
             test_dataset = PedestrianAttributeDataset(annotation_path,image_folder,split)
-            return DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+            return test_dataset,DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
             
 def get_reid_dataloader(root_dir,split="TrainVal",batch_size=4,validation_split = .1):
     train_dataset = PedestrianReIDDataset(root_dir)

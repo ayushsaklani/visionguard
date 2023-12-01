@@ -109,7 +109,52 @@ def train(model,dataloader,criterion,optimizer,scheduler=None,num_epochs=100,dev
         torch.save(model.state_dict(),os.path.join(out_path,'swin_transformer_model.pth'))
     
     writer.close()
+
+
+def evaluate(model,dataloader,criterion,weights,device="cpu",out_path="outputs",tf_logs="tf_logs"):
+    print("Starting Evaluation")
+    writer = SummaryWriter(tf_logs)
     
+    model.load_state_dict(torch.load(weights))
+    model = model.to(device)
+    print("Model loaded")
+    
+    with torch.no_grad():
+        model.eval()
+        test_loss = 0.0
+        loop = tqdm(dataloader["test"],desc=f' Testing', unit='image')
+        total_targets = []
+        total_preds = []
+        total_acc =0
+        for batch_idx,data in enumerate(loop):
+            images,labels = data
+            images = images.to(device,dtype = torch.float)
+            labels = labels.to(device,dtype = torch.float)
+        
+            out,_ = model(images)
+            
+            total_targets.append(labels.view(-1))
+            total_preds.append(out.view(-1))
+            loss = criterion(out,labels)
+            
+            loop.set_postfix(loss = loss.item(),accuracy = get_accuracy(labels.cpu(),out.cpu()))
+            
+            test_loss += loss.item()
+            if batch_idx ==len(loop)-1:
+                average_loss = test_loss / len(loop)
+                total_targets = torch.cat(total_targets,axis=0).view(-1).detach().cpu()
+                total_preds = torch.cat(total_preds,axis =0).view(-1).detach().cpu()
+                total_acc = get_accuracy(total_targets,total_preds)
+                loop.set_postfix(loss = loss.item(),avg_loss = average_loss,test_accuracy = total_acc*100)
+        
+        writer.add_scalar("Test/AttrLoss", average_loss, global_step=1)
+        writer.add_scalar("Test/AttrAcc", total_acc, global_step=1)
+    
+        print(f"Test AttrLoss: {average_loss:.4f} Test AttrAccuracy:{total_acc:.4f}")
+            
+    writer.close()
+
+
 
 if __name__=="__main__":
     train_dataloader = get_attr_dataloader(annotation_path="../../projectcv/pa-100k/annotation/annotation.mat",image_folder="../../projectcv/pa-100k/release_data/",split = "Train",batch_size =32)
