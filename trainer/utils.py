@@ -68,6 +68,7 @@ class PedestrianAttributeDataset(Dataset):
                 return self.annotations["test_images_name"],self.annotations["test_label"]
             case _ :
                 raise NotFoundError(f"{self.split} not found.")
+
             
             
     def __getitem__(self,index):
@@ -160,7 +161,20 @@ def show_grid(imgs):
 
 
 def get_device():
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    if not torch.backends.mps.is_available():
+        if not torch.backends.mps.is_built():
+            print("MPS not available because the current PyTorch install was not "
+              "built with MPS enabled.")
+        else:
+            print("MPS not available because the current MacOS version is not 12.3+ "
+              "and/or you do not have an MPS-enabled device on this machine.")
+            
+        device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    else:
+        print("Using MPS")
+        device = torch.device("mps")
+    return device
 
 def get_attr_dataloader(annotation_path="../gcs/pa-100k/annotation/annotation.mat",image_folder="../gcs/pa-100k/release_data/",split = "Train",batch_size=4):
     match split:

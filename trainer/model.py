@@ -4,6 +4,60 @@ import torch.nn as nn
 from torchvision.models import swin_v2_s, Swin_V2_S_Weights
 
 
+C2L ={0: 'Female',
+ 1: 'AgeOver60',
+ 2: 'Age18-60',
+ 3: 'AgeLess18',
+ 4: 'Front',
+ 5: 'Side',
+ 6: 'Back',
+ 7: 'Hat',
+ 8: 'Glasses',
+ 9: 'HandBag',
+ 10: 'ShoulderBag',
+ 11: 'Backpack',
+ 12: 'HoldObjectsInFront',
+ 13: 'ShortSleeve',
+ 14: 'LongSleeve',
+ 15: 'UpperStride',
+ 16: 'UpperLogo',
+ 17: 'UpperPlaid',
+ 18: 'UpperSplice',
+ 19: 'LowerStripe',
+ 20: 'LowerPattern',
+ 21: 'LongCoat',
+ 22: 'Trousers',
+ 23: 'Shorts',
+ 24: 'Skirt&Dress',
+ 25: 'boots'}
+
+L2C ={'Female': 0,
+ 'AgeOver60': 1,
+ 'Age18-60': 2,
+ 'AgeLess18': 3,
+ 'Front': 4,
+ 'Side': 5,
+ 'Back': 6,
+ 'Hat': 7,
+ 'Glasses': 8,
+ 'HandBag': 9,
+ 'ShoulderBag': 10,
+ 'Backpack': 11,
+ 'HoldObjectsInFront': 12,
+ 'ShortSleeve': 13,
+ 'LongSleeve': 14,
+ 'UpperStride': 15,
+ 'UpperLogo': 16,
+ 'UpperPlaid': 17,
+ 'UpperSplice': 18,
+ 'LowerStripe': 19,
+ 'LowerPattern': 20,
+ 'LongCoat': 21,
+ 'Trousers': 22,
+ 'Shorts': 23,
+ 'Skirt&Dress': 24,
+ 'boots': 25}
+
 
 def get_backbone():
     backbone = swin_v2_s(Swin_V2_S_Weights.IMAGENET1K_V1)
@@ -75,7 +129,13 @@ class VisionGuard(nn.Module):
         self.decoder = Decoder(384,512)
         self.head_attr = PersonAttributeHead(512,num_attr)
         self.head_reid = PersonReIDHead(512,emb_size)
-        
+    
+    def c2l(self,c):
+        return C2L[c]
+
+    def l2c(self,label):
+        return L2C[label]
+
     def forward(self,x):
         x = self.backbone(x)
         x = self.decoder(x)
