@@ -4,7 +4,7 @@ import torch.nn as nn
 from torchvision.models import swin_v2_s, Swin_V2_S_Weights
 
 
-C2L ={0: 'Female',
+C2L ={0: 'Male',
  1: 'AgeOver60',
  2: 'Age18-60',
  3: 'AgeLess18',
@@ -12,7 +12,7 @@ C2L ={0: 'Female',
  5: 'Side',
  6: 'Back',
  7: 'Hat',
- 8: 'Glasses',
+ 8: 'Beard',
  9: 'HandBag',
  10: 'ShoulderBag',
  11: 'Backpack',
@@ -74,11 +74,12 @@ class Decoder(nn.Module):
         self.maxpool = nn.MaxPool2d(2)
         self.relu = nn.ReLU()
         self.linear = nn.Linear(24192, out_channels)
+        self.dropout = nn.Dropout2d(0.25)
     def forward(self, x):
         #inpuit -> bx18x14x384
         x = x.permute(0,3,1,2)
-        x = self.relu(self.batchNorm(self.conv(x)))
-        x = self.relu(self.batchNorm(self.conv(x)))
+        x = self.dropout(self.relu(self.batchNorm(self.conv(x))))
+        x = self.dropout(self.relu(self.batchNorm(self.conv(x))))
         x = self.maxpool(x)
         # Apply the linear layer
         b,_,_,_= x.shape
@@ -94,11 +95,12 @@ class PersonAttributeHead(nn.Module):
         # Linear layer for attribute prediction
         self.linear = nn.Linear(in_channels,128)
         self.relu = nn.ReLU()
-        self.output = nn.Linear(128, num_attributes)
+        self.output = nn.Linear(in_channels, num_attributes)
+        
 
     def forward(self, x):
         # Apply the linear layer
-        x = self.relu(self.linear(x))
+        # x = self.relu(self.linear(x))
         output = self.output(x)
 
         return output
@@ -130,6 +132,10 @@ class VisionGuard(nn.Module):
         self.head_attr = PersonAttributeHead(512,num_attr)
         self.head_reid = PersonReIDHead(512,emb_size)
     
+    def freeze(self):
+        for param in self.backbone.parameters():
+            param.requires_grad = False
+    
     def c2l(self,c):
         return C2L[c]
 
@@ -141,4 +147,5 @@ class VisionGuard(nn.Module):
         x = self.decoder(x)
         
         return self.head_attr(x), self.head_reid(x)
+    
 
