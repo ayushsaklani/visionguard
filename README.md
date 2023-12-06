@@ -1,7 +1,7 @@
-#VisionGuard: Enhancing Video Surveillance through
+# VisionGuard: Enhancing Video Surveillance through
 Pedestrian Attribute Recognition
 
-###Executive Summary:
+### Executive Summary:
 ```text
 VisionGuard proposes a Pedestrian Attribute Recognition system designed for video surveillance and
 security applications. In the realm of video surveillance, the challenge was to elevate the capabilities
@@ -24,4 +24,8 @@ pip install -r requirements.txt
 ```bash
 python ui/app.py --vid "Absolute path of video file"
 ```
+
+### Results
+Below are the results from our app ui. 
+![result1](output/Best%20Crop.png)
 
