@@ -19,7 +19,7 @@ except ImportError:
 
 
 class VisionGuardProcessor:
-    def __init__(self, model_path='/Users/shunya/Project/visionguard/ui/weights/swin_transformer_model_epoch_2.pth',yolo_weights='yolov8n.pt'):
+    def __init__(self, model_path='/Users/shunya/Project/visionguard/ui/weights/swin_transformer_model_best.pth',yolo_weights='yolov8n.pt'):
 
 
         self.device = get_device()

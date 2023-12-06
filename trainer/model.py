@@ -4,7 +4,7 @@ import torch.nn as nn
 from torchvision.models import swin_v2_s, Swin_V2_S_Weights
 
 
-C2L ={0: 'Male',
+C2L ={0: 'Female',
  1: 'AgeOver60',
  2: 'Age18-60',
  3: 'AgeLess18',

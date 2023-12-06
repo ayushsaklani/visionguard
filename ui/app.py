@@ -6,10 +6,14 @@ import numpy as np
 from videoCapture import MyVideoCapture
 from visionGuardProcessor import VisionGuardProcessor
 from multiprocessing import Process, Queue, Pipe
+import argparse
 
 import warnings
 warnings.filterwarnings("ignore")
 
+parser = argparse.ArgumentParser(description='Vision Guard.')
+parser.add_argument('--vid', default="",
+                    help='path of the video')
 
 
 
@@ -95,5 +99,8 @@ class App:
 
 if __name__ == "__main__":
     # Create a window and pass it to the Application object
-    video_path = "/Users/shunya/Project/visionguard/ui/videos/IMG_0327_2.MOV"
-    App(tkinter.Tk(), "VisionGuard-beta-v0.009",video_path)
+    args = parser.parse_args()
+    
+    # video_path = "/Users/shunya/Project/visionguard/ui/videos/IMG_0347.MOV"
+
+    App(tkinter.Tk(), "VisionGuard-beta-v0.009",args.vid)
