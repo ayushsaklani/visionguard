@@ -30,10 +30,6 @@ Below are the results from our app ui.
 
 <table>
 <tr>
-<th> Good </th>
-<th> Bad </th>
-</tr>
-<tr>
 <td>
 
 ![result1](output/Best%20Crop.png)
@@ -41,7 +37,6 @@ Below are the results from our app ui.
 </td>
 <td>
 ![result2](output/h.png)
-
 </td>
 </tr>
 </table>
