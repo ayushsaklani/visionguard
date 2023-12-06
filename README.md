@@ -33,9 +33,9 @@ Below are the results from our app ui.
 <td>
 
 ![result1](output/Best%20Crop.png)
-
 </td>
 <td>
+
 ![result2](output/h.png)
 </td>
 </tr>
