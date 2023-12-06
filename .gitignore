@@ -160,5 +160,4 @@ cython_debug/
 #.idea/
 ui/frames/*
 ui/videos/*
-ui/weights/*
 *.DS_Store
