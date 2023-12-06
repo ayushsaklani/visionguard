@@ -1,5 +1,5 @@
-# VisionGuard: Enhancing Video Surveillance through
-Pedestrian Attribute Recognition
+# VisionGuard 
+## Enhancing Video Surveillance through Pedestrian Attribute Recognition
 
 ### Executive Summary:
 ```text
