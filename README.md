@@ -43,5 +43,5 @@ Below are the results from our app ui.
 
 ### Live Demo
 
-![Live Demo](output/best_video_504.mov) 
+![Live Demo](output/VisionGuardDemo.mp4) 
 
