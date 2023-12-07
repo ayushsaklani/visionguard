@@ -43,5 +43,6 @@ Below are the results from our app ui.
 
 ### Live Demo
 
-output/VisionGuardDemo.mp4
-
+<video width="320" height="240" controls>
+  <source src="output/VisionGuardDemo.mp4" type="video/mp4">
+</video>
