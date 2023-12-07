@@ -43,5 +43,5 @@ Below are the results from our app ui.
 
 ### Live Demo
 
-https://youtu.be/NvnKzlS-f7Y 
+output/VisionGuardDemo.mp4
 
