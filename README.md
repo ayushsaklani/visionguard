@@ -40,9 +40,3 @@ Below are the results from our app ui.
 </td>
 </tr>
 </table>
-
-### Live Demo
-
-<video width="320" height="240" controls>
-  <source src="output/VisionGuardDemo.mp4" type="video/mp4">
-</video>
