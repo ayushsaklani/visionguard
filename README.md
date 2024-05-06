@@ -24,6 +24,9 @@ pip install -r requirements.txt
 ```bash
 python ui/app.py --vid "Absolute path of video file"
 ```
+### Demo
+
+https://github.com/ayushsaklani/visionguard/assets/19391609/57010bdb-240e-47ef-af3d-65885b36d06d
 
 ### Results
 Below are the results from our app ui. 
